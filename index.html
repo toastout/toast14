@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>📚 먀북리더기</title>
-	/* v20 - 캡처 스크롤 위치 수정, 새 탭 열기 */
+	/* v21 - dialogue 줄바꿈 렌더링 수정 */
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -56,7 +56,7 @@
         .chat-bubble.chat-right { background: var(--message-right); border-bottom-right-radius: 4px; }
         .chat-time { font-size: 0.7rem; color: var(--text-secondary); margin: 2px 8px 0; opacity: 0.7; }
         .message-text .action { color: var(--text-action); }
-        .message-text .dialogue { display: inline; background-color: var(--dialogue-bg); padding: 0.15em 0.3em; border-radius: 3px; border-left: 2px solid var(--dialogue-border); padding-left: 0.5em; }
+        .message-text .dialogue { display: inline; background-color: var(--dialogue-bg); padding: 0.15em 0.3em; border-radius: 3px; border-left: 2px solid var(--dialogue-border); padding-left: 0.5em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
         .highlight { background: linear-gradient(transparent 60%, rgba(205, 168, 130, 0.3) 60%); font-weight: 700; }
         .touch-area { position: fixed; top: 60px; bottom: 70px; width: 33.33%; z-index: 10; cursor: pointer; touch-action: manipulation; }
         .touch-area-left { left: 0; }
