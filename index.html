@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>📚 먀북리더기</title>
-	/* v19 - iOS 더블탭 확대 방지, 버튼 크기 확대 */
+	/* v20 - 캡처 스크롤 위치 수정, 새 탭 열기 */
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -380,8 +380,38 @@ function loadAnonSettings() { try { anonMap = JSON.parse(localStorage.getItem('m
 
 captureBtn.addEventListener('click', async () => {
     try {
-        const canvas = await html2canvas(contentWrapper, { backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-primary'), scale: 2, useCORS: true });
-        const link = document.createElement('a'); link.download = `myabook_p${currentPage}_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
+        // 스크롤 위치 저장 후 맨 위로
+        const savedScroll = readerContent.scrollTop;
+        readerContent.scrollTop = 0;
+        
+        // 약간의 딜레이로 렌더링 안정화
+        await new Promise(r => setTimeout(r, 100));
+        
+        const canvas = await html2canvas(contentWrapper, { 
+            backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-primary'), 
+            scale: 2, 
+            useCORS: true,
+            scrollY: 0,
+            windowHeight: contentWrapper.scrollHeight
+        });
+        
+        // 스크롤 위치 복원
+        readerContent.scrollTop = savedScroll;
+        
+        // 새 탭에서 이미지 열기 (iOS에서 길게 눌러 저장 가능)
+        const imageUrl = canvas.toDataURL('image/png');
+        const newTab = window.open();
+        if (newTab) {
+            newTab.document.write(`<html><head><title>📷 캡처 - p${currentPage}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#333;}img{max-width:100%;height:auto;}</style></head><body><img src="${imageUrl}"></body></html>`);
+            newTab.document.close();
+        } else {
+            // 팝업 차단 시 다운로드로 대체
+            const link = document.createElement('a'); 
+            link.download = `myabook_p${currentPage}_${Date.now()}.png`; 
+            link.href = imageUrl; 
+            link.click();
+        }
+        
         captureToast.classList.add('show'); setTimeout(() => captureToast.classList.remove('show'), 2000);
     } catch (e) { alert('캡처 실패: ' + e.message); }
 });
