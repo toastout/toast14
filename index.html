@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>📚 먀북리더기</title>
+	/* v17 */
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --bg-primary: #F4ECD8; --bg-secondary: #EADBCB; --text-primary: #3E2723; --text-secondary: #5F4B32; --text-action: #796652; --accent: #CDA882; --border: #E3CEB9; --shadow: rgba(95, 75, 50, 0.1); --message-left: #E3CEB9; --message-right: #DCC1A7; --dialogue-bg: rgba(0, 0, 0, 0.04); --dialogue-border: #B0A495; }
+        body.theme-light { --bg-primary: #FAFAFA; --bg-secondary: #F5F5F5; --text-primary: #212121; --text-secondary: #333333; --text-action: #666666; --accent: #666666; --border: #E0E0E0; --shadow: rgba(0, 0, 0, 0.08); --message-left: #E0E0E0; --message-right: #CCCCCC; --dialogue-bg: rgba(0, 0, 0, 0.03); --dialogue-border: #999999; }
+        body.theme-dark { --bg-primary: #3E2F21; --bg-secondary: #4A3C28; --text-primary: #E8DCC4; --text-secondary: #D4C5A9; --text-action: #B8A896; --accent: #CDA882; --border: #5C3317; --shadow: rgba(0, 0, 0, 0.3); --message-left: #5C3317; --message-right: #704214; --dialogue-bg: rgba(255, 255, 255, 0.05); --dialogue-border: #8B7355; }
+        body.theme-pure { --bg-primary: #FFFFFF; --bg-secondary: #FAFAFA; --text-primary: #000000; --text-secondary: #111111; --text-action: #666666; --accent: #333333; --border: #CCCCCC; --shadow: rgba(0, 0, 0, 0.1); --message-left: #E0E0E0; --message-right: #CCCCCC; --dialogue-bg: rgba(0, 0, 0, 0.03); --dialogue-border: #666666; }
+        body { font-family: 'Ridibatang', 'Noto Serif KR', serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.8; transition: background 0.3s, color 0.3s; overflow-x: hidden; }
+        .upload-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-primary); z-index: 1000; padding: 20px; }
+        .upload-screen.hidden { display: none; }
+        .upload-content { text-align: center; max-width: 400px; }
+        .upload-title { font-size: 3rem; margin-bottom: 10px; }
+        .upload-subtitle { font-size: 1.5rem; margin-bottom: 30px; color: var(--text-secondary); font-weight: 600; }
+        .upload-desc { color: var(--text-secondary); margin-bottom: 30px; line-height: 1.6; }
+        .file-input-wrapper { position: relative; display: inline-block; width: 100%; }
+        .file-input-label { display: inline-block; width: 100%; padding: 18px 30px; background: var(--accent); color: var(--bg-primary); border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; }
+        input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+        .upload-footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .home-link { display: inline-block; font-size: 1.5rem; text-decoration: none; padding: 10px; opacity: 0.6; }
+        .reader-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-primary); }
+        .reader-screen.active { display: block; }
+        .reader-header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; transition: transform 0.3s; }
+        .reader-header.hidden { transform: translateY(-100%); }
+        .header-title { font-size: 1.2rem; font-weight: 600; }
+        .header-controls { display: flex; gap: 12px; }
+        .header-btn { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 5px; color: var(--text-primary); opacity: 0.7; }
+        .reader-content { position: absolute; top: 60px; left: 0; right: 0; bottom: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .content-wrapper { max-width: 700px; margin: 0 auto; padding: 40px 20px 100px; }
+        .message { margin-bottom: 40px; padding: 30px 0; border-bottom: 1px solid var(--border); position: relative; }
+        .message:last-child { border-bottom: none; }
+        .message-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 0.9rem; color: var(--text-secondary); }
+        .speaker-name { font-weight: 700; color: var(--accent); }
+        .message-index { background: var(--border); padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; }
+        .bookmark-btn { position: absolute; top: 30px; right: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; }
+        .bookmark-btn.active { opacity: 1; }
+        .message-text { font-size: 1.1rem; line-height: 2; white-space: pre-wrap; word-break: keep-all; }
+        .timeinfo-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 15px 0; font-size: 0.85rem; color: var(--text-secondary); }
+        .timeinfo-row { margin: 4px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+        .timeinfo-label { font-weight: 600; color: var(--accent); }
+        .inlay-placeholder, .bg-indicator { display: inline-block; background: var(--bg-secondary); border: 1px dashed var(--border); border-radius: 6px; padding: 4px 10px; margin: 6px 0; font-size: 0.85rem; color: var(--text-secondary); }
+        .inlay-placeholder.hidden, .bg-indicator.hidden { display: none; }
+        .chat-container { display: flex; flex-direction: column; margin: 4px 0 !important; }
+        .chat-container.right { align-items: flex-end; }
+        .chat-container.left { align-items: flex-start; }
+        .chat-bubble { display: inline-block; max-width: 75%; padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.6; }
+        .chat-bubble.chat-left { background: var(--message-left); border-bottom-left-radius: 4px; }
+        .chat-bubble.chat-right { background: var(--message-right); border-bottom-right-radius: 4px; }
+        .chat-time { font-size: 0.7rem; color: var(--text-secondary); margin: 2px 8px 0; opacity: 0.7; }
+        .message-text .action { color: var(--text-action); }
+        .message-text .dialogue { display: inline; background-color: var(--dialogue-bg); padding: 0.15em 0.3em; border-radius: 3px; border-left: 2px solid var(--dialogue-border); padding-left: 0.5em; }
+        .highlight { background: linear-gradient(transparent 60%, rgba(205, 168, 130, 0.3) 60%); font-weight: 700; }
+        .touch-area { position: fixed; top: 60px; bottom: 60px; width: 33.33%; z-index: 10; cursor: pointer; }
+        .touch-area-left { left: 0; }
+        .touch-area-right { right: 0; }
+        .touch-feedback { position: fixed; top: 50%; transform: translateY(-50%); font-size: 3rem; opacity: 0; pointer-events: none; z-index: 200; }
+        .touch-feedback-left { left: 20px; }
+        .touch-feedback-right { right: 20px; }
+        .touch-feedback.show { opacity: 0.3; }
+        .reader-footer { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--bg-secondary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; transition: transform 0.3s; }
+        .reader-footer.hidden { transform: translateY(100%); }
+        .page-info { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
+        .nav-buttons { display: flex; gap: 10px; }
+        .nav-btn { padding: 8px 16px; background: var(--accent); color: var(--bg-primary); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .nav-btn:disabled { opacity: 0.3; }
+        .side-panel { position: fixed; top: 0; right: -100%; width: 85%; max-width: 400px; height: 100%; background: var(--bg-secondary); box-shadow: -4px 0 12px var(--shadow); transition: right 0.3s; z-index: 200; overflow-y: auto; }
+        .side-panel.open { right: 0; }
+        .panel-header { position: sticky; top: 0; background: var(--bg-secondary); padding: 20px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .panel-title { font-size: 1.3rem; font-weight: 600; }
+        .panel-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        .panel-content { padding: 20px; }
+        .bookmark-item { padding: 15px; margin-bottom: 10px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; }
+        .bookmark-info { flex: 1; }
+        .bookmark-speaker { font-weight: 700; color: var(--accent); margin-bottom: 5px; }
+        .bookmark-preview { font-size: 0.9rem; color: var(--text-secondary); overflow: hidden; }
+        .bookmark-delete { background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+        .empty-bookmarks { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .bookmark-actions { display: flex; gap: 10px; padding: 0 20px 20px; }
+        .bookmark-action-btn { flex: 1; padding: 10px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .panel-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 199; opacity: 0; pointer-events: none; }
+        .panel-overlay.show { opacity: 1; pointer-events: all; }
+        .settings-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); width: 90%; max-width: 400px; background: var(--bg-secondary); border-radius: 12px; padding: 25px; z-index: 201; opacity: 0; pointer-events: none; max-height: 90vh; overflow-y: auto; }
+        .settings-modal.open { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+        .settings-section { margin-bottom: 20px; }
+        .settings-label { display: block; margin-bottom: 10px; font-weight: 600; color: var(--text-secondary); font-size: 0.95rem; }
+        .theme-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .theme-btn { padding: 10px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .theme-btn.active { border-color: var(--accent); background: var(--accent); color: var(--bg-primary); }
+        .toggle-option { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg-primary); border-radius: 8px; margin-bottom: 8px; }
+        .toggle-label { font-size: 0.9rem; }
+        .toggle-switch { position: relative; width: 46px; height: 24px; background: var(--border); border-radius: 12px; cursor: pointer; flex-shrink: 0; }
+        .toggle-switch.active { background: var(--accent); }
+        .toggle-slider { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.3s; }
+        .toggle-switch.active .toggle-slider { transform: translateX(22px); }
+        .anon-settings { margin-top: 10px; padding: 10px; background: var(--bg-primary); border-radius: 8px; }
+        .anon-auto-list { margin-bottom: 12px; }
+        .anon-row { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 5px; }
+        .anon-row-name { min-width: 50px; max-width: 70px; font-weight: 600; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .anon-row-arrow { color: var(--text-secondary); flex-shrink: 0; font-size: 0.8rem; }
+        .anon-row-input { flex: 1; min-width: 70px; padding: 5px 6px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 4px; font-size: 0.8rem; }
+        .anon-swap-btn { width: 100%; padding: 8px; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 12px; font-size: 0.85rem; }
+        .anon-swap-btn:hover { border-color: var(--accent); }
+        .anon-custom-section { border-top: 1px solid var(--border); padding-top: 12px; }
+        .anon-custom-title { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+        .anon-custom-list { margin-bottom: 8px; }
+        .anon-custom-row { display: flex; align-items: center; gap: 4px; padding: 4px 6px; background: var(--bg-secondary); border-radius: 5px; margin-bottom: 4px; }
+        .anon-edit-input { flex: 1; min-width: 40px; padding: 3px 5px; border: 1px solid var(--border); background: var(--bg-primary); border-radius: 3px; font-size: 0.75rem; }
+        .anon-custom-row .anon-arrow { font-size: 0.7rem; color: var(--text-secondary); }
+        .anon-custom-del { background: none; border: none; cursor: pointer; opacity: 0.6; font-size: 0.85rem; flex-shrink: 0; padding: 2px; }
+        .anon-quick-btns { display: flex; align-items: center; gap: 4px; margin: 6px 0; flex-wrap: wrap; }
+        .anon-quick-label { font-size: 0.7rem; color: var(--text-secondary); }
+        .anon-speaker-btns { display: flex; gap: 3px; flex-wrap: wrap; }
+        .anon-speaker-btn { padding: 2px 6px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+        .anon-speaker-btn:hover { border-color: var(--accent); }
+        .anon-tag-btn { padding: 3px 8px; background: var(--accent); color: var(--bg-primary); border: none; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; }
+        .anon-add-row { display: flex; align-items: center; gap: 4px; }
+        .anon-add-row .anon-input { flex: 1; min-width: 60px; padding: 5px 6px; font-size: 0.75rem; border: 2px solid var(--border); background: var(--bg-secondary); border-radius: 5px; }
+        .anon-add-row .anon-arrow { flex-shrink: 0; font-size: 0.75rem; color: var(--text-secondary); }
+        .anon-add-btn { padding: 5px 8px; background: var(--accent); color: var(--bg-primary); border: none; border-radius: 5px; cursor: pointer; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+        .font-size-control { display: flex; align-items: center; gap: 10px; }
+        .font-size-btn { padding: 8px 16px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 700; }
+        .font-size-display { flex: 1; text-align: center; font-size: 1rem; font-weight: 600; }
+        .per-page-control { display: flex; align-items: center; gap: 10px; }
+        .per-page-input { flex: 1; padding: 8px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; text-align: center; }
+        .speaker-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+        .speaker-btn { padding: 6px 12px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 16px; cursor: pointer; font-size: 0.85rem; }
+        .speaker-btn.active { border-color: var(--accent); background: var(--accent); color: var(--bg-primary); }
+        .search-input-wrapper { display: flex; gap: 6px; }
+        .search-input { flex: 1; padding: 8px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; }
+        .search-btn { padding: 8px 12px; border: none; background: var(--accent); color: var(--bg-primary); border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .action-buttons { display: flex; flex-direction: column; gap: 8px; }
+        .action-btn { width: 100%; padding: 10px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.9rem; }
+        .close-settings-btn { width: 100%; padding: 10px; border: none; background: var(--accent); color: var(--bg-primary); border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 15px; }
+        .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+        .capture-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg-primary); padding: 12px 24px; border-radius: 8px; font-weight: 600; z-index: 300; opacity: 0; pointer-events: none; }
+        .capture-toast.show { opacity: 1; }
+        @media (max-width: 768px) { .content-wrapper { padding: 30px 15px 80px; } .message-text { font-size: 1rem; } .chat-bubble { max-width: 85%; } }
+    </style>
+</head>
+<body>
+    <div class="upload-screen" id="uploadScreen">
+        <div class="upload-content">
+            <div class="upload-title">📚</div>
+            <div class="upload-subtitle">먀북리더기</div>
+            <p class="upload-desc">채팅(RP) 대화 파일을 업로드하면<br>이북처럼 편하게 읽을 수 있어요</p>
+            <div class="file-input-wrapper">
+                <label for="fileInput" class="file-input-label">📂 파일 선택하기</label>
+                <input type="file" id="fileInput" accept=".txt">
+            </div>
+            <div class="upload-footer"><a href="https://toastout.github.io/toast/" class="home-link" target="_blank">🍞</a></div>
+        </div>
+    </div>
+
+    <div class="reader-screen" id="readerScreen">
+        <div class="reader-header" id="readerHeader">
+            <div class="header-title">📚 먀북리더기</div>
+            <div class="header-controls">
+                <button class="header-btn" id="captureBtn" title="캡처">📷</button>
+                <button class="header-btn" id="bookmarkBtn" title="북마크">🔖</button>
+                <button class="header-btn" id="settingsBtn" title="설정">⚙️</button>
+                <a href="https://toastout.github.io/toast/" class="header-btn" target="_blank" style="text-decoration: none;">🍞</a>
+            </div>
+        </div>
+        <div class="reader-content" id="readerContent"><div class="content-wrapper" id="contentWrapper"><div class="loading">📖 로딩 중...</div></div></div>
+        <div class="touch-area touch-area-left" id="touchLeft"></div>
+        <div class="touch-area touch-area-right" id="touchRight"></div>
+        <div class="touch-feedback touch-feedback-left" id="feedbackLeft">◀</div>
+        <div class="touch-feedback touch-feedback-right" id="feedbackRight">▶</div>
+        <div class="reader-footer" id="readerFooter">
+            <div class="page-info" id="pageInfo">1 / 1</div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prevBtn" disabled>◀ 이전</button>
+                <button class="nav-btn" id="nextBtn" disabled>다음 ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="capture-toast" id="captureToast">📷 캡처 완료!</div>
+    <div class="panel-overlay" id="panelOverlay"></div>
+    <div class="side-panel" id="sidePanel">
+        <div class="panel-header"><div class="panel-title">🔖 북마크</div><button class="panel-close" id="panelClose">✕</button></div>
+        <div class="bookmark-actions">
+            <button class="bookmark-action-btn" id="exportBookmarks">💾 내보내기</button>
+            <button class="bookmark-action-btn" id="importBookmarks">📥 가져오기</button>
+            <input type="file" id="importBookmarkFile" accept=".json" style="display: none;">
+        </div>
+        <div class="panel-content" id="panelContent"><div class="empty-bookmarks">북마크가 없습니다</div></div>
+    </div>
+
+    <div class="panel-overlay" id="settingsOverlay"></div>
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-section">
+            <div class="settings-label">🎨 테마</div>
+            <div class="theme-buttons">
+                <button class="theme-btn active" data-theme="sepia">세피아</button>
+                <button class="theme-btn" data-theme="light">밝은톤</button>
+                <button class="theme-btn" data-theme="dark">다크</button>
+                <button class="theme-btn" data-theme="pure">모노톤</button>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-label">⚙️ 표시 옵션</div>
+            <div class="toggle-option"><span class="toggle-label">TimeInfo 표시</span><div class="toggle-switch active" id="timeInfoToggle"><div class="toggle-slider"></div></div></div>
+            <div class="toggle-option"><span class="toggle-label">Inlay (🖼️) 표시</span><div class="toggle-switch active" id="inlayToggle"><div class="toggle-slider"></div></div></div>
+            <div class="toggle-option"><span class="toggle-label">배경 (◌◌) 표시</span><div class="toggle-switch active" id="bgToggle"><div class="toggle-slider"></div></div></div>
+            <div class="toggle-option"><span class="toggle-label">HTML 태그 제거</span><div class="toggle-switch active" id="stripHtmlToggle"><div class="toggle-slider"></div></div></div>
+            <div class="toggle-option"><span class="toggle-label">발화자 익명화</span><div class="toggle-switch" id="anonToggle"><div class="toggle-slider"></div></div></div>
+            <div class="anon-settings" id="anonSettings" style="display: none;">
+                <div class="anon-auto-list" id="anonAutoList"></div>
+                <button class="anon-swap-btn" id="anonSwapBtn">🔄 순서 바꾸기</button>
+                <div class="anon-custom-section">
+                    <div class="anon-custom-title">➕ 커스텀 규칙 (본문 치환용)</div>
+                    <div class="anon-custom-list" id="anonCustomList"></div>
+                    <div class="anon-quick-btns">
+                        <span class="anon-quick-label">발화자:</span>
+                        <div class="anon-speaker-btns" id="anonSpeakerBtns"></div>
+                    </div>
+                    <div class="anon-add-row">
+                        <input type="text" class="anon-input" id="anonAddFrom" placeholder="원본">
+                        <span class="anon-arrow">→</span>
+                        <input type="text" class="anon-input" id="anonAddTo" placeholder="변환">
+                        <button class="anon-add-btn" id="anonAddBtn">+</button>
+                    </div>
+                    <div class="anon-quick-btns">
+                        <span class="anon-quick-label">빠른입력:</span>
+                        <button class="anon-tag-btn" data-tag="{{char}}">{{char}}</button>
+                        <button class="anon-tag-btn" data-tag="{{user}}">{{user}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-label">📏 글자 크기</div>
+            <div class="font-size-control"><button class="font-size-btn" id="fontDecrease">A-</button><div class="font-size-display" id="fontSizeDisplay">100%</div><button class="font-size-btn" id="fontIncrease">A+</button></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-label">📄 페이지당 발화 수</div>
+            <div class="per-page-control"><input type="number" class="per-page-input" id="perPageInput" value="5" min="1" max="50"><button class="search-btn" id="applyPerPage">적용</button></div>
+        </div>
+        <div class="settings-section"><div class="settings-label">👥 발화자 필터</div><div class="speaker-filters" id="speakerFilters"></div></div>
+        <div class="settings-section">
+            <div class="settings-label">🔍 검색</div>
+            <div class="search-input-wrapper"><input type="text" class="search-input" id="searchInput" placeholder="검색어 입력..."><button class="search-btn" id="searchBtn">검색</button></div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-label">📂 파일</div>
+            <div class="action-buttons"><button class="action-btn" id="changeFileBtn">🔄 다른 파일 열기</button><button class="action-btn" id="resetBtn">🗑️ 초기화</button></div>
+        </div>
+        <button class="close-settings-btn" id="closeSettings">닫기</button>
+    </div>
+	<script>
+let chatData = [], currentPage = 1, perPage = 5, totalPages = 1, currentSearch = '';
+let activeSpeakers = new Set(), bookmarks = [], fontSize = 100, currentTheme = 'sepia';
+let showTimeInfo = true, showInlay = true, showBg = true, stripHtml = true, anonymize = false;
+let touchStartX = 0, touchStartY = 0, currentFileName = '', originalSpeakers = [];
+let anonMap = {}, anonCustom = [], anonSwapped = false;
+
+const $ = id => document.getElementById(id);
+const uploadScreen = $('uploadScreen'), readerScreen = $('readerScreen'), fileInput = $('fileInput');
+const readerHeader = $('readerHeader'), readerFooter = $('readerFooter'), readerContent = $('readerContent');
+const contentWrapper = $('contentWrapper'), pageInfo = $('pageInfo'), prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
+const captureBtn = $('captureBtn'), bookmarkBtn = $('bookmarkBtn'), settingsBtn = $('settingsBtn');
+const sidePanel = $('sidePanel'), panelOverlay = $('panelOverlay'), panelClose = $('panelClose'), panelContent = $('panelContent');
+const settingsModal = $('settingsModal'), settingsOverlay = $('settingsOverlay'), closeSettings = $('closeSettings');
+const touchLeft = $('touchLeft'), touchRight = $('touchRight'), feedbackLeft = $('feedbackLeft'), feedbackRight = $('feedbackRight');
+const searchInput = $('searchInput'), searchBtn = $('searchBtn'), speakerFilters = $('speakerFilters');
+const perPageInput = $('perPageInput'), applyPerPage = $('applyPerPage');
+const fontIncrease = $('fontIncrease'), fontDecrease = $('fontDecrease'), fontSizeDisplay = $('fontSizeDisplay');
+const changeFileBtn = $('changeFileBtn'), resetBtn = $('resetBtn');
+const exportBookmarksBtn = $('exportBookmarks'), importBookmarksBtn = $('importBookmarks'), importBookmarkFile = $('importBookmarkFile');
+const timeInfoToggle = $('timeInfoToggle'), inlayToggle = $('inlayToggle'), bgToggle = $('bgToggle'), stripHtmlToggle = $('stripHtmlToggle');
+const anonToggle = $('anonToggle'), anonSettings = $('anonSettings');
+const anonAutoList = $('anonAutoList'), anonSwapBtn = $('anonSwapBtn');
+const anonCustomList = $('anonCustomList'), anonAddFrom = $('anonAddFrom'), anonAddTo = $('anonAddTo'), anonAddBtn = $('anonAddBtn');
+const anonSpeakerBtns = $('anonSpeakerBtns');
+const captureToast = $('captureToast');
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function normalizeQuotes(t) { return t.replace(/"/g, '"').replace(/"/g, '"'); }
+
+function stripHtmlTags(t) {
+    // 코드블록 먼저 제거
+    t = t.replace(/```[\s\S]*?```/g, '');
+    t = t.replace(/```\w*/g, '');
+    // 모든 HTML 태그 제거
+    t = t.replace(/<[^>]*>/g, '');
+    // 마크다운 볼드 **text** → text
+    t = t.replace(/\*\*([^*]+)\*\*/g, '$1');
+    // 마크다운 이탤릭 *text* → text (action 스타일 방지)
+    t = t. replace(/\*([^*]+)\*/g, '$1');
+    // 여러 줄바꿈 정리
+    t = t.replace(/\n{3,}/g, '\n\n');
+    t = t.replace(/[ \t]{2,}/g, ' ');
+    return normalizeQuotes(t).trim();
+}
+
+function removeSpecialLines(t) {
+    return t.split('\n').filter(l => {
+        const tr = l.trim();
+        if (/^[✔✓]+$/.test(tr)) return false;
+        if (/^!\s*🗿+\s*!$/.test(tr) || /^![\s🗿]+!$/.test(tr) || /^🗿+$/.test(tr)) return false;
+        return true;
+    }).join('\n');
+}
+
+function extractTimeOnly(t) { 
+    // ☀︎08:03☀︎ 형식
+    const m1 = t.match(/[☀︎☆]\s*(\d{1,2}:\d{2}(?:\s*(?:AM|PM)?)?)\s*[☀︎☆]/i); 
+    if (m1) return m1[1].trim();
+    return null; 
+}
+
+function removeTimeEmojiPart(t) { 
+    return t.replace(/[☀︎☆][^☀︎☆]*[☀︎☆]/g, '').trim(); 
+}
+
+function getSpeakerDisplayName(s) { return anonymize ? (anonMap[s] || s) : s; }
+
+function renderAnonUI() {
+    anonAutoList.innerHTML = originalSpeakers.map((speaker, idx) => {
+        const defaultVal = anonSwapped ? (idx === 0 ? '{{user}}' : idx === 1 ? '{{char}}' : `{{speaker${idx+1}}}`) : (idx === 0 ? '{{char}}' : idx === 1 ? '{{user}}' : `{{speaker${idx+1}}}`);
+        const currentVal = anonMap[speaker] || defaultVal;
+        return `<div class="anon-row"><span class="anon-row-name">${escapeHtml(speaker)}</span><span class="anon-row-arrow">→</span><input type="text" class="anon-row-input" data-speaker="${escapeHtml(speaker)}" value="${escapeHtml(currentVal)}"></div>`;
+    }).join('');
+    anonAutoList.querySelectorAll('.anon-row-input').forEach(input => {
+        input.addEventListener('input', e => { anonMap[e.target.dataset.speaker] = e.target.value || e.target.dataset.speaker; saveAnonSettings(); renderPage(); });
+    });
+    anonSpeakerBtns.innerHTML = originalSpeakers.map(s => `<button class="anon-speaker-btn" data-name="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('');
+    anonSpeakerBtns.querySelectorAll('.anon-speaker-btn').forEach(btn => {
+        btn.addEventListener('click', () => { anonAddFrom.value = btn.dataset.name; anonAddFrom.focus(); });
+    });
+    anonCustomList.innerHTML = anonCustom.map((rule, idx) => `<div class="anon-custom-row" data-idx="${idx}"><input type="text" class="anon-edit-input" data-field="from" value="${escapeHtml(rule.from)}"><span class="anon-arrow">→</span><input type="text" class="anon-edit-input" data-field="to" value="${escapeHtml(rule.to)}"><button class="anon-custom-del" data-idx="${idx}">🗑️</button></div>`).join('');
+    anonCustomList.querySelectorAll('.anon-edit-input').forEach(input => {
+        input.addEventListener('input', e => { const row = e.target.closest('.anon-custom-row'); anonCustom[parseInt(row.dataset.idx)][e.target.dataset.field] = e.target.value; saveAnonSettings(); renderPage(); });
+    });
+    anonCustomList.querySelectorAll('.anon-custom-del').forEach(btn => {
+        btn.addEventListener('click', e => { anonCustom.splice(parseInt(e.target.dataset.idx), 1); saveAnonSettings(); renderAnonUI(); renderPage(); });
+    });
+}
+
+function initAnonMap() {
+    anonMap = {};
+    originalSpeakers.forEach((speaker, idx) => {
+        anonMap[speaker] = anonSwapped ? (idx === 0 ? '{{user}}' : idx === 1 ? '{{char}}' : `{{speaker${idx+1}}}`) : (idx === 0 ? '{{char}}' : idx === 1 ? '{{user}}' : `{{speaker${idx+1}}}`);
+    });
+}
+
+anonSwapBtn.addEventListener('click', () => { anonSwapped = !anonSwapped; initAnonMap(); saveAnonSettings(); renderAnonUI(); renderPage(); });
+anonAddBtn.addEventListener('click', () => {
+    const from = anonAddFrom.value.trim(), to = anonAddTo.value.trim();
+    if (from && to) { anonCustom.push({ from, to }); anonAddFrom.value = ''; anonAddTo.value = ''; saveAnonSettings(); renderAnonUI(); renderPage(); }
+});
+document.querySelectorAll('.anon-tag-btn').forEach(btn => { btn.addEventListener('click', () => { anonAddTo.value = btn.dataset.tag; anonAddTo.focus(); }); });
+
+function anonymizeContent(text) {
+    if (!anonymize) return text;
+    let result = text;
+    [...anonCustom].sort((a, b) => b.from.length - a.from.length).forEach(rule => { if (rule.from && rule.to) result = result.replace(new RegExp(escapeRegex(rule.from), 'g'), rule.to); });
+    [...originalSpeakers].filter(s => s.length >= 2).sort((a, b) => b.length - a.length).forEach(speaker => { const r = anonMap[speaker]; if (r && r !== speaker) result = result.replace(new RegExp(escapeRegex(speaker), 'g'), r); });
+    return result;
+}
+
+function saveAnonSettings() { localStorage.setItem('myabook_anonMap', JSON.stringify(anonMap)); localStorage.setItem('myabook_anonCustom', JSON.stringify(anonCustom)); localStorage.setItem('myabook_anonSwapped', anonSwapped); }
+function loadAnonSettings() { try { anonMap = JSON.parse(localStorage.getItem('myabook_anonMap')) || {}; } catch {} try { anonCustom = JSON.parse(localStorage.getItem('myabook_anonCustom')) || []; } catch {} anonSwapped = localStorage.getItem('myabook_anonSwapped') === 'true'; }
+
+captureBtn.addEventListener('click', async () => {
+    try {
+        const canvas = await html2canvas(contentWrapper, { backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-primary'), scale: 2, useCORS: true });
+        const link = document.createElement('a'); link.download = `myabook_p${currentPage}_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
+        captureToast.classList.add('show'); setTimeout(() => captureToast.classList.remove('show'), 2000);
+    } catch (e) { alert('캡처 실패: ' + e.message); }
+});
+
+timeInfoToggle.addEventListener('click', () => { showTimeInfo = !showTimeInfo; timeInfoToggle.classList.toggle('active'); localStorage.setItem('myabook_showTimeInfo', showTimeInfo); renderPage(); });
+inlayToggle.addEventListener('click', () => { showInlay = !showInlay; inlayToggle.classList.toggle('active'); localStorage.setItem('myabook_showInlay', showInlay); renderPage(); });
+bgToggle.addEventListener('click', () => { showBg = !showBg; bgToggle.classList.toggle('active'); localStorage.setItem('myabook_showBg', showBg); renderPage(); });
+stripHtmlToggle.addEventListener('click', () => { stripHtml = !stripHtml; stripHtmlToggle.classList.toggle('active'); localStorage.setItem('myabook_stripHtml', stripHtml); renderPage(); });
+anonToggle.addEventListener('click', () => { anonymize = !anonymize; anonToggle.classList.toggle('active'); anonSettings.style.display = anonymize ? 'block' : 'none'; localStorage.setItem('myabook_anonymize', anonymize); if (anonymize && !Object.keys(anonMap).length) initAnonMap(); renderAnonUI(); renderPage(); });
+
+fileInput.addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    currentFileName = file.name;
+    const reader = new FileReader();
+    reader.onload = ev => { parseChat(ev.target.result); uploadScreen.classList.add('hidden'); readerScreen.classList.add('active'); };
+    reader.readAsText(file);
+});
+
+function parseChat(content) {
+    chatData = []; const lines = content.split('\n'); let cur = null, inCode = false;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i], tr = line.trim();
+        if (tr.startsWith('```')) { inCode = !inCode; if (cur) cur.content += (cur.content ? '\n' : '') + line; continue; }
+        if (inCode) { if (cur) cur.content += (cur.content ? '\n' : '') + line; continue; }
+        if (tr.startsWith('--')) { if (cur) chatData.push(cur); cur = { speaker: tr.substring(2).trim(), content: '', timeInfo: null }; }
+        else if (tr.startsWith('## TimeInfo')) { let ti = '', j = i + 1; while (j < lines.length) { const nl = lines[j].trim(); if (nl.startsWith('[') && nl.includes('|')) { ti += nl + '\n'; i = j; j++; } else break; } if (cur) cur.timeInfo = ti.trim(); }
+        else if (cur && tr && !tr.startsWith('#')) { cur.content += (cur.content ? '\n' : '') + line; }
+    }
+    if (cur) chatData.push(cur); if (chatData.length > 0) chatData.shift();
+    originalSpeakers = [...new Set(chatData.map(m => m.speaker))];
+    loadAnonSettings(); if (!Object.keys(anonMap).length) initAnonMap();
+    initializeReader();
+}
+
+function initializeReader() {
+    activeSpeakers = new Set(originalSpeakers); speakerFilters.innerHTML = '';
+    originalSpeakers.forEach(s => { const b = document.createElement('button'); b.className = 'speaker-btn active'; b.textContent = s; b.onclick = () => toggleSpeaker(s, b); speakerFilters.appendChild(b); });
+    loadBookmarks(); if (anonymize) renderAnonUI(); renderPage();
+}
+
+function toggleSpeaker(s, b) { if (activeSpeakers.has(s)) { activeSpeakers.delete(s); b.classList.remove('active'); } else { activeSpeakers.add(s); b.classList.add('active'); } currentPage = 1; renderPage(); }
+
+function renderPage() {
+    let filtered = chatData.filter(m => activeSpeakers.has(m.speaker));
+    if (currentSearch) filtered = filtered.filter(m => m.content.toLowerCase().includes(currentSearch.toLowerCase()));
+    totalPages = Math.ceil(filtered.length / perPage); if (currentPage > totalPages) currentPage = totalPages; if (currentPage < 1) currentPage = 1;
+    const start = (currentPage - 1) * perPage, paged = filtered.slice(start, start + perPage);
+    pageInfo.textContent = `${currentPage} / ${totalPages || 1}`; prevBtn.disabled = currentPage <= 1; nextBtn.disabled = currentPage >= totalPages;
+    if (!paged.length) { contentWrapper.innerHTML = '<div class="loading">표시할 메시지가 없습니다</div>'; return; }
+    contentWrapper.innerHTML = paged.map(msg => {
+        const gi = chatData.indexOf(msg), isB = bookmarks.includes(gi), si = originalSpeakers.indexOf(msg.speaker), isR = si === 0;
+        let cc = removeSpecialLines(msg.content); if (stripHtml) cc = stripHtmlTags(cc); cc = anonymizeContent(cc);
+        let content = styleSpecialChars(cc, isR);
+        if (currentSearch) content = content.replace(new RegExp(`(${escapeRegex(currentSearch)})`, 'gi'), '<span class="highlight">$1</span>');
+        let tiHtml = showTimeInfo && msg.timeInfo ? `<div class="timeinfo-box">${formatTimeInfo(msg.timeInfo)}</div>` : '';
+        return `<div class="message"><div class="message-meta"><span class="message-index">#${gi}</span><span class="speaker-name">${escapeHtml(getSpeakerDisplayName(msg.speaker))}</span></div><button class="bookmark-btn ${isB ? 'active' : ''}" onclick="toggleBookmark(${gi})">${isB ? '⭐' : '☆'}</button><div class="message-text">${content}</div>${tiHtml}</div>`;
+    }).join('');
+    readerContent.scrollTop = 0;
+}
+
+function formatTimeInfo(ti) {
+    if (!ti) return '';
+    let processed = anonymize ? anonymizeContent(ti) : ti;
+    return processed.split('\n').map(l => { const m = l.match(/^\[(.*)\]$/); if (m) { return '<div class="timeinfo-row">' + m[1].split('|').map(p => { const [k, ...v] = p.split(':'); return k && v.length ? `<span><span class="timeinfo-label">${escapeHtml(k.trim())}:</span> ${escapeHtml(v.join(':').trim())}</span>` : escapeHtml(p); }).join(' ') + '</div>'; } return escapeHtml(l); }).join('');
+}
+
+function styleSpecialChars(t, isR) {
+    const inlays = [], chats = [], bgs = [];
+    let pt = t.replace(/◌◌/g, () => { bgs.push(1); return `__BG_${bgs.length-1}__`; });
+    pt = pt.replace(/\{\{inlay:([^}]+)\}\}/g, (m, id) => { inlays.push(id); return `__INLAY_${inlays.length-1}__`; });
+    pt = pt.replace(/\[\[([^\]]+)\]\]/g, (m, c) => { chats.push({ content: removeTimeEmojiPart(c), time: extractTimeOnly(c), isRight: isR }); return `__CHAT_${chats.length-1}__`; });
+    pt = escapeHtml(pt);
+    pt = pt.replace(/\*([^*]+)\*/g, '<span class="action">$1</span>');
+    pt = pt.replace(/"([^"]+)"/g, '<span class="dialogue">"$1"</span>');
+    pt = pt.replace(/'([^']+)'/g, '<span class="thought">\'$1\'</span>');
+    inlays.forEach((_, i) => { pt = pt.replace(`__INLAY_${i}__`, `<div class="inlay-placeholder ${showInlay ? '' : 'hidden'}">🖼️ 이미지</div>`); });
+    bgs.forEach((_, i) => { pt = pt.replace(`__BG_${i}__`, `<div class="bg-indicator ${showBg ? '' : 'hidden'}">🏖️ 배경</div>`); });
+    chats.forEach((c, i) => { pt = pt.replace(`__CHAT_${i}__`, `<div class="chat-container ${c.isRight ? 'right' : 'left'}"><div class="chat-bubble chat-${c.isRight ? 'right' : 'left'}">${escapeHtml(c.content)}</div>${c.time ? `<span class="chat-time">${escapeHtml(c.time)}</span>` : ''}</div>`); });
+    return pt;
+}
+
+function toggleBookmark(i) { const bi = bookmarks.indexOf(i); if (bi > -1) bookmarks.splice(bi, 1); else bookmarks.push(i); bookmarks.sort((a, b) => a - b); saveBookmarks(); renderPage(); renderBookmarkList(); }
+function saveBookmarks() { localStorage.setItem('myabook_bookmarks', JSON.stringify({ fileName: currentFileName, bookmarks })); }
+function loadBookmarks() { try { const d = JSON.parse(localStorage.getItem('myabook_bookmarks')); bookmarks = d?.fileName === currentFileName ? d.bookmarks || [] : []; } catch { bookmarks = []; } renderBookmarkList(); }
+function renderBookmarkList() {
+    if (!bookmarks.length) { panelContent.innerHTML = '<div class="empty-bookmarks">북마크가 없습니다</div>'; return; }
+    panelContent.innerHTML = bookmarks.map(i => { const m = chatData[i]; if (!m) return ''; return `<div class="bookmark-item" onclick="goToBookmark(${i})"><div class="bookmark-info"><div class="bookmark-speaker">#${i} ${escapeHtml(getSpeakerDisplayName(m.speaker))}</div><div class="bookmark-preview">${escapeHtml(anonymizeContent(m.content.substring(0, 50)))}...</div></div><button class="bookmark-delete" onclick="event.stopPropagation(); deleteBookmark(${i})">🗑️</button></div>`; }).join('');
+}
+function goToBookmark(i) { const f = chatData.filter(m => activeSpeakers.has(m.speaker)), fi = f.findIndex(m => chatData.indexOf(m) === i); if (fi !== -1) { currentPage = Math.floor(fi / perPage) + 1; renderPage(); closeSidePanel(); } }
+function deleteBookmark(i) { const bi = bookmarks.indexOf(i); if (bi > -1) { bookmarks.splice(bi, 1); saveBookmarks(); renderPage(); renderBookmarkList(); } }
+
+exportBookmarksBtn.addEventListener('click', () => { const d = { fileName: currentFileName, bookmarks, exportDate: new Date().toISOString() }; const b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `bookmarks_${Date.now()}.json`; a.click(); });
+importBookmarksBtn.addEventListener('click', () => importBookmarkFile.click());
+importBookmarkFile.addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { const d = JSON.parse(ev.target.result); if (d.bookmarks) { bookmarks = d.bookmarks.filter(i => i < chatData.length); saveBookmarks(); renderPage(); renderBookmarkList(); alert('북마크 불러옴!'); } } catch { alert('파일 오류'); } }; r.readAsText(f); importBookmarkFile.value = ''; });
+
+prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderPage(); } });
+nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; renderPage(); } });
+touchLeft.addEventListener('click', () => { if (currentPage > 1) { showFeedback('left'); currentPage--; renderPage(); } });
+touchRight.addEventListener('click', () => { if (currentPage < totalPages) { showFeedback('right'); currentPage++; renderPage(); } });
+function showFeedback(d) { const f = d === 'left' ? feedbackLeft : feedbackRight; f.classList.add('show'); setTimeout(() => f.classList.remove('show'), 200); }
+
+readerContent.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; });
+readerContent.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - touchStartX, dy = e.changedTouches[0].clientY - touchStartY; if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) { if (dx > 0 && currentPage > 1) { showFeedback('left'); currentPage--; renderPage(); } else if (dx < 0 && currentPage < totalPages) { showFeedback('right'); currentPage++; renderPage(); } } });
+
+let lastST = 0;
+readerContent.addEventListener('scroll', () => { const st = readerContent.scrollTop; if (st > lastST && st > 100) { readerHeader.classList.add('hidden'); readerFooter.classList.add('hidden'); } else { readerHeader.classList.remove('hidden'); readerFooter.classList.remove('hidden'); } lastST = st; });
+
+bookmarkBtn.addEventListener('click', () => { sidePanel.classList.add('open'); panelOverlay.classList.add('show'); });
+panelClose.addEventListener('click', closeSidePanel); panelOverlay.addEventListener('click', closeSidePanel);
+function closeSidePanel() { sidePanel.classList.remove('open'); panelOverlay.classList.remove('show'); }
+
+settingsBtn.addEventListener('click', () => { settingsModal.classList.add('open'); settingsOverlay.classList.add('show'); if (anonymize) renderAnonUI(); });
+closeSettings.addEventListener('click', closeSettingsModal); settingsOverlay.addEventListener('click', closeSettingsModal);
+function closeSettingsModal() { settingsModal.classList.remove('open'); settingsOverlay.classList.remove('show'); }
+
+document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => {
+    const t = b.dataset.theme; document.querySelectorAll('.theme-btn').forEach(x => x.classList.remove('active')); b.classList.add('active');
+    document.body.className = ''; if (t === 'light') document.body.classList.add('theme-light'); else if (t === 'dark') document.body.classList.add('theme-dark'); else if (t === 'pure') document.body.classList.add('theme-pure');
+    currentTheme = t; localStorage.setItem('myabook_theme', t);
+}));
+
+fontIncrease.addEventListener('click', () => { if (fontSize < 150) { fontSize += 10; applyFontSize(); } });
+fontDecrease.addEventListener('click', () => { if (fontSize > 70) { fontSize -= 10; applyFontSize(); } });
+function applyFontSize() { contentWrapper.style.fontSize = `${fontSize}%`; fontSizeDisplay.textContent = `${fontSize}%`; localStorage.setItem('myabook_fontSize', fontSize); }
+
+applyPerPage.addEventListener('click', () => { const n = parseInt(perPageInput.value); if (n > 0 && n <= 50) { perPage = n; currentPage = 1; renderPage(); localStorage.setItem('myabook_perPage', perPage); } });
+searchBtn.addEventListener('click', () => { currentSearch = searchInput.value.trim(); currentPage = 1; renderPage(); });
+searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') searchBtn.click(); });
+changeFileBtn.addEventListener('click', () => { if (confirm('새 파일을 열까요?')) location.reload(); });
+resetBtn.addEventListener('click', () => { if (confirm('초기화할까요?')) { localStorage.clear(); location.reload(); } });
+
+window.addEventListener('DOMContentLoaded', () => {
+    const st = localStorage.getItem('myabook_theme');
+    if (st) { currentTheme = st; document.body.className = ''; if (st === 'light') document.body.classList.add('theme-light'); else if (st === 'dark') document.body.classList.add('theme-dark'); else if (st === 'pure') document.body.classList.add('theme-pure'); document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === st)); }
+    const sf = localStorage.getItem('myabook_fontSize'); if (sf) { fontSize = parseInt(sf); applyFontSize(); }
+    const sp = localStorage.getItem('myabook_perPage'); if (sp) { perPage = parseInt(sp); perPageInput.value = perPage; }
+    const sti = localStorage.getItem('myabook_showTimeInfo'); if (sti !== null) { showTimeInfo = sti === 'true'; if (!showTimeInfo) timeInfoToggle.classList.remove('active'); }
+    const sil = localStorage.getItem('myabook_showInlay'); if (sil !== null) { showInlay = sil === 'true'; if (!showInlay) inlayToggle.classList.remove('active'); }
+    const sbg = localStorage.getItem('myabook_showBg'); if (sbg !== null) { showBg = sbg === 'true'; if (!showBg) bgToggle.classList.remove('active'); }
+    const ssh = localStorage.getItem('myabook_stripHtml'); if (ssh !== null) { stripHtml = ssh === 'true'; if (!stripHtml) stripHtmlToggle.classList.remove('active'); }
+    const san = localStorage.getItem('myabook_anonymize'); if (san !== null) { anonymize = san === 'true'; if (anonymize) { anonToggle.classList.add('active'); anonSettings.style.display = 'block'; } }
+});
+</script>
+</body>
+</html>
