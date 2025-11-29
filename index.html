@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>📚 먀북리더기</title>
-	/* v21 - dialogue 줄바꿈 렌더링 수정 */
+	/* v22 - 말풍선 간격 조정 (텍스트↔말풍선 12px, 말풍선↔말풍선 2px) */
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -48,7 +48,10 @@
         .timeinfo-label { font-weight: 600; color: var(--accent); }
         .inlay-placeholder, .bg-indicator { display: inline-block; background: var(--bg-secondary); border: 1px dashed var(--border); border-radius: 6px; padding: 4px 10px; margin: 6px 0; font-size: 0.85rem; color: var(--text-secondary); }
         .inlay-placeholder.hidden, .bg-indicator.hidden { display: none; }
-        .chat-container { display: flex; flex-direction: column; margin: 4px 0 !important; }
+        .chat-container { display: flex; flex-direction: column; margin: 2px 0 !important; }
+        .chat-container:first-child { margin-top: 0 !important; }
+        .chat-group { margin: 12px 0; }
+        .chat-group:first-child { margin-top: 0; }
         .chat-container.right { align-items: flex-end; }
         .chat-container.left { align-items: flex-start; }
         .chat-bubble { display: inline-block; max-width: 75%; padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.6; }
@@ -514,6 +517,10 @@ function styleSpecialChars(t, isR) {
         const timeHtml = c.time ?  `<div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; text-align: ${c.isRight ? 'right' : 'left'}; opacity: 0.8;">${escapeHtml(c.time)}</div>` : '';
         pt = pt.replace(`__CHAT_${i}__`, `<div class="chat-container ${c.isRight ? 'right' : 'left'}"><div class="chat-bubble chat-${c.isRight ? 'right' : 'left'}">${c.content}</div>${timeHtml}</div>`); 
     });
+    
+    // 9단계: 연속된 말풍선들을 chat-group으로 감싸기
+    pt = pt.replace(/(<div class="chat-container[^>]*>[\s\S]*?<\/div>\s*<\/div>)(\s*)(?=<div class="chat-container|$)/g, '$1$2');
+    pt = pt.replace(/((?:<div class="chat-container[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*)+)/g, '<div class="chat-group">$1</div>');
     
     return pt;
 }
