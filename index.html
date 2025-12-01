@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>📚 먀북리더기</title>
-	/* v25 - 페이지 수동 이동, 발화자명 수정 가능, 글자 크기 버그 수정 */
+	/* v26 - 헤더 줄바꿈 방지, 글자크기/발화수 2열 배치 */
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -30,7 +30,7 @@
         .reader-screen.active { display: block; }
         .reader-header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; transition: transform 0.3s; }
         .reader-header.hidden { transform: translateY(-100%); }
-        .header-title { font-size: 1.2rem; font-weight: 600; }
+        .header-title { font-size: 1.2rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
         .header-controls { display: flex; gap: 12px; }
         .header-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 10px; color: var(--text-primary); opacity: 0.7; touch-action: manipulation; }
         .reader-content { position: absolute; top: 60px; left: 0; right: 0; bottom: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -99,6 +99,13 @@
         .settings-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); width: 90%; max-width: 400px; background: var(--bg-secondary); border-radius: 12px; padding: 25px; z-index: 201; opacity: 0; pointer-events: none; max-height: 90vh; overflow-y: auto; }
         .settings-modal.open { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
         .settings-section { margin-bottom: 20px; }
+        .settings-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .settings-section-half { }
+        .settings-section-half .settings-label { margin-bottom: 8px; font-size: 0.85rem; }
+        .settings-section-half .font-size-control, .settings-section-half .per-page-control { gap: 6px; }
+        .settings-section-half .font-size-btn, .settings-section-half .per-page-btn { padding: 8px 12px; font-size: 1rem; }
+        .settings-section-half .font-size-display { font-size: 0.9rem; }
+        .settings-section-half .per-page-input { width: 40px; padding: 6px; font-size: 0.9rem; }
         .settings-label { display: block; margin-bottom: 10px; font-weight: 600; color: var(--text-secondary); font-size: 0.95rem; }
         .theme-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .theme-btn { padding: 12px 14px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; touch-action: manipulation; }
@@ -251,13 +258,15 @@
                 </div>
             </div>
         </div>
-        <div class="settings-section">
-            <div class="settings-label">📏 글자 크기</div>
-            <div class="font-size-control"><button class="font-size-btn" id="fontDecrease">A-</button><div class="font-size-display" id="fontSizeDisplay">100%</div><button class="font-size-btn" id="fontIncrease">A+</button></div>
-        </div>
-        <div class="settings-section">
-            <div class="settings-label">📄 페이지당 발화 수</div>
-            <div class="per-page-control"><button class="per-page-btn" id="perPageDecrease">−</button><input type="number" class="per-page-input" id="perPageInput" value="5" min="1" max="50"><button class="per-page-btn" id="perPageIncrease">+</button></div>
+        <div class="settings-row-2col">
+            <div class="settings-section-half">
+                <div class="settings-label">📏 글자 크기</div>
+                <div class="font-size-control"><button class="font-size-btn" id="fontDecrease">A-</button><div class="font-size-display" id="fontSizeDisplay">100%</div><button class="font-size-btn" id="fontIncrease">A+</button></div>
+            </div>
+            <div class="settings-section-half">
+                <div class="settings-label">📄 발화 수</div>
+                <div class="per-page-control"><button class="per-page-btn" id="perPageDecrease">−</button><input type="number" class="per-page-input" id="perPageInput" value="5" min="1" max="50"><button class="per-page-btn" id="perPageIncrease">+</button></div>
+            </div>
         </div>
         <div class="settings-section"><div class="settings-label">👥 발화자 필터</div><div class="speaker-filters" id="speakerFilters"></div></div>
         <div class="settings-section">
