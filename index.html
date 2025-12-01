@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>📚 먀북리더기</title>
-	/* v24 - 말풍선 그룹 로직 수정 (공백 버그 해결) */
+	/* v25 - 페이지 수동 이동, 발화자명 수정 가능, 글자 크기 버그 수정 */
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -42,7 +42,7 @@
         .message-index { background: var(--border); padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; }
         .bookmark-btn { position: absolute; top: 30px; right: 0; background: none; border: none; font-size: 1.8rem; cursor: pointer; opacity: 0.3; padding: 8px; touch-action: manipulation; }
         .bookmark-btn.active { opacity: 1; }
-        .message-text { font-size: 1.1rem; line-height: 2; white-space: pre-wrap; word-break: keep-all; }
+        .message-text { font-size: 1.1em; line-height: 2; white-space: pre-wrap; word-break: keep-all; }
         .timeinfo-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin: 15px 0; font-size: 0.85rem; color: var(--text-secondary); }
         .timeinfo-row { margin: 4px 0; display: flex; flex-wrap: wrap; gap: 8px; }
         .timeinfo-label { font-weight: 600; color: var(--accent); }
@@ -73,7 +73,10 @@
         .touch-feedback.show { opacity: 0.3; }
         .reader-footer { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: var(--bg-secondary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; transition: transform 0.3s; }
         .reader-footer.hidden { transform: translateY(100%); }
-        .page-info { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
+        .page-info { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; cursor: pointer; padding: 8px 12px; border-radius: 6px; }
+        .page-info:hover { background: var(--bg-primary); }
+        .page-info-wrapper { display: flex; align-items: center; }
+        .page-input { width: 60px; padding: 8px; border: 2px solid var(--accent); background: var(--bg-primary); border-radius: 6px; text-align: center; font-size: 0.9rem; font-weight: 600; }
         .nav-buttons { display: flex; gap: 10px; }
         .nav-btn { padding: 12px 24px; background: var(--accent); color: var(--bg-primary); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; touch-action: manipulation; }
         .nav-btn:disabled { opacity: 0.3; }
@@ -110,6 +113,7 @@
         .anon-auto-list { margin-bottom: 12px; }
         .anon-row { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 5px; }
         .anon-row-name { min-width: 50px; max-width: 70px; font-weight: 600; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .anon-row-name-input { width: 80px; padding: 5px 6px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
         .anon-row-arrow { color: var(--text-secondary); flex-shrink: 0; font-size: 0.8rem; }
         .anon-row-input { flex: 1; min-width: 70px; padding: 5px 6px; border: 2px solid var(--border); background: var(--bg-primary); border-radius: 4px; font-size: 0.8rem; }
         .anon-swap-btn { width: 100%; padding: 8px; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 12px; font-size: 0.85rem; }
@@ -149,7 +153,7 @@
         .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
         .capture-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg-primary); padding: 12px 24px; border-radius: 8px; font-weight: 600; z-index: 300; opacity: 0; pointer-events: none; }
         .capture-toast.show { opacity: 1; }
-        @media (max-width: 768px) { .content-wrapper { padding: 30px 15px 80px; } .message-text { font-size: 1rem; } .chat-bubble { max-width: 85%; } }
+        @media (max-width: 768px) { .content-wrapper { padding: 30px 15px 80px; } .message-text { font-size: 1em; } .chat-bubble { max-width: 85%; } }
     </style>
 </head>
 <body>
@@ -182,7 +186,10 @@
         <div class="touch-feedback touch-feedback-left" id="feedbackLeft">◀</div>
         <div class="touch-feedback touch-feedback-right" id="feedbackRight">▶</div>
         <div class="reader-footer" id="readerFooter">
-            <div class="page-info" id="pageInfo">1 / 1</div>
+            <div class="page-info-wrapper">
+                <span class="page-info" id="pageInfo">1 / 1</span>
+                <input type="number" class="page-input" id="pageInput" min="1" style="display:none;">
+            </div>
             <div class="nav-buttons">
                 <button class="nav-btn" id="prevBtn" disabled>◀ 이전</button>
                 <button class="nav-btn" id="nextBtn" disabled>다음 ▶</button>
@@ -268,12 +275,12 @@ let chatData = [], currentPage = 1, perPage = 5, totalPages = 1, currentSearch =
 let activeSpeakers = new Set(), bookmarks = [], fontSize = 100, currentTheme = 'sepia';
 let showTimeInfo = true, showInlay = true, showBg = true, stripHtml = true, anonymize = false;
 let touchStartX = 0, touchStartY = 0, currentFileName = '', originalSpeakers = [];
-let anonMap = {}, anonCustom = [], anonSwapped = false;
+let anonMap = {}, anonCustom = [], anonSwapped = false, anonDisplayNames = {};
 
 const $ = id => document.getElementById(id);
 const uploadScreen = $('uploadScreen'), readerScreen = $('readerScreen'), fileInput = $('fileInput');
 const readerHeader = $('readerHeader'), readerFooter = $('readerFooter'), readerContent = $('readerContent');
-const contentWrapper = $('contentWrapper'), pageInfo = $('pageInfo'), prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
+const contentWrapper = $('contentWrapper'), pageInfo = $('pageInfo'), pageInput = $('pageInput'), prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
 const captureBtn = $('captureBtn'), bookmarkBtn = $('bookmarkBtn'), settingsBtn = $('settingsBtn');
 const sidePanel = $('sidePanel'), panelOverlay = $('panelOverlay'), panelClose = $('panelClose'), panelContent = $('panelContent');
 const settingsModal = $('settingsModal'), settingsOverlay = $('settingsOverlay'), closeSettings = $('closeSettings');
@@ -336,14 +343,25 @@ function removeTimeEmojiPart(t) {
     return t.trim(); 
 }
 
-function getSpeakerDisplayName(s) { return anonymize ? (anonMap[s] || s) : s; }
+function getSpeakerDisplayName(s) { 
+    if (!anonymize) return s;
+    return anonDisplayNames[s] || anonMap[s] || s; 
+}
 
 function renderAnonUI() {
     anonAutoList.innerHTML = originalSpeakers.map((speaker, idx) => {
         const defaultVal = anonSwapped ? (idx === 0 ? '{{user}}' : idx === 1 ? '{{char}}' : `{{speaker${idx+1}}}`) : (idx === 0 ? '{{char}}' : idx === 1 ? '{{user}}' : `{{speaker${idx+1}}}`);
         const currentVal = anonMap[speaker] || defaultVal;
-        return `<div class="anon-row"><span class="anon-row-name">${escapeHtml(speaker)}</span><span class="anon-row-arrow">→</span><input type="text" class="anon-row-input" data-speaker="${escapeHtml(speaker)}" value="${escapeHtml(currentVal)}"></div>`;
+        const displayName = anonDisplayNames[speaker] || speaker;
+        return `<div class="anon-row"><input type="text" class="anon-row-name-input" data-speaker="${escapeHtml(speaker)}" value="${escapeHtml(displayName)}" title="표시될 이름"><span class="anon-row-arrow">→</span><input type="text" class="anon-row-input" data-speaker="${escapeHtml(speaker)}" value="${escapeHtml(currentVal)}" title="치환될 값"></div>`;
     }).join('');
+    anonAutoList.querySelectorAll('.anon-row-name-input').forEach(input => {
+        input.addEventListener('input', e => { 
+            anonDisplayNames[e.target.dataset.speaker] = e.target.value || e.target.dataset.speaker; 
+            saveAnonSettings(); 
+            renderPage(); 
+        });
+    });
     anonAutoList.querySelectorAll('.anon-row-input').forEach(input => {
         input.addEventListener('input', e => { anonMap[e.target.dataset.speaker] = e.target.value || e.target.dataset.speaker; saveAnonSettings(); renderPage(); });
     });
@@ -382,8 +400,8 @@ function anonymizeContent(text) {
     return result;
 }
 
-function saveAnonSettings() { localStorage.setItem('myabook_anonMap', JSON.stringify(anonMap)); localStorage.setItem('myabook_anonCustom', JSON.stringify(anonCustom)); localStorage.setItem('myabook_anonSwapped', anonSwapped); }
-function loadAnonSettings() { try { anonMap = JSON.parse(localStorage.getItem('myabook_anonMap')) || {}; } catch {} try { anonCustom = JSON.parse(localStorage.getItem('myabook_anonCustom')) || []; } catch {} anonSwapped = localStorage.getItem('myabook_anonSwapped') === 'true'; }
+function saveAnonSettings() { localStorage.setItem('myabook_anonMap', JSON.stringify(anonMap)); localStorage.setItem('myabook_anonCustom', JSON.stringify(anonCustom)); localStorage.setItem('myabook_anonSwapped', anonSwapped); localStorage.setItem('myabook_anonDisplayNames', JSON.stringify(anonDisplayNames)); }
+function loadAnonSettings() { try { anonMap = JSON.parse(localStorage.getItem('myabook_anonMap')) || {}; } catch {} try { anonCustom = JSON.parse(localStorage.getItem('myabook_anonCustom')) || []; } catch {} try { anonDisplayNames = JSON.parse(localStorage.getItem('myabook_anonDisplayNames')) || {}; } catch {} anonSwapped = localStorage.getItem('myabook_anonSwapped') === 'true'; }
 
 captureBtn.addEventListener('click', async () => {
     try {
@@ -547,6 +565,28 @@ importBookmarkFile.addEventListener('change', e => { const f = e.target.files[0]
 
 prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderPage(); } });
 nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; renderPage(); } });
+
+// 페이지 번호 클릭 시 입력창 표시
+pageInfo.addEventListener('click', () => {
+    pageInfo.style.display = 'none';
+    pageInput.style.display = 'block';
+    pageInput.value = currentPage;
+    pageInput.max = totalPages;
+    pageInput.focus();
+    pageInput.select();
+});
+pageInput.addEventListener('blur', () => {
+    pageInput.style.display = 'none';
+    pageInfo.style.display = 'block';
+});
+pageInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+        const n = parseInt(pageInput.value);
+        if (n >= 1 && n <= totalPages) { currentPage = n; renderPage(); }
+        pageInput.blur();
+    }
+});
+
 touchLeft.addEventListener('click', () => { if (currentPage > 1) { showFeedback('left'); currentPage--; renderPage(); } });
 touchRight.addEventListener('click', () => { if (currentPage < totalPages) { showFeedback('right'); currentPage++; renderPage(); } });
 function showFeedback(d) { const f = d === 'left' ? feedbackLeft : feedbackRight; f.classList.add('show'); setTimeout(() => f.classList.remove('show'), 200); }
