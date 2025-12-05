@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <title>📚 먀북리더기</title>
-	/* v27 - 익명화 UI 정리, deprecated 메타태그 수정 */
+	/* v28 - 말풍선 좌우 위치 수정 (char 왼쪽, user 오른쪽) */
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @font-face { font-family: 'Ridibatang'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff'); font-weight: normal; font-display: swap; }
@@ -487,7 +487,7 @@ function renderPage() {
     pageInfo.textContent = `${currentPage} / ${totalPages || 1}`; prevBtn.disabled = currentPage <= 1; nextBtn.disabled = currentPage >= totalPages;
     if (!paged.length) { contentWrapper.innerHTML = '<div class="loading">표시할 메시지가 없습니다</div>'; return; }
     contentWrapper.innerHTML = paged.map(msg => {
-        const gi = chatData.indexOf(msg), isB = bookmarks.includes(gi), si = originalSpeakers.indexOf(msg.speaker), isR = si === 0;
+        const gi = chatData.indexOf(msg), isB = bookmarks.includes(gi), si = originalSpeakers.indexOf(msg.speaker), isR = si === 1;
         let cc = removeSpecialLines(msg.content); if (stripHtml) cc = stripHtmlTags(cc); cc = anonymizeContent(cc);
         let content = styleSpecialChars(cc, isR);
         if (currentSearch) content = content.replace(new RegExp(`(${escapeRegex(currentSearch)})`, 'gi'), '<span class="highlight">$1</span>');
